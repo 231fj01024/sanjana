@@ -12,6 +12,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Cache Python dependencies to speed up future runs
+      - name: Cache Python dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
+
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
@@ -21,23 +30,28 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run Unit Tests (Dummy)
+      # Run actual unit tests using pytest
+      - name: Run Unit Tests
         run: |
-          echo "Running dummy unit tests..."
-          echo "All tests passed successfully!"
+          echo "Running unit tests..."
+          pytest --maxfail=1 --disable-warnings -q
 
-      - name: Lint Code (Dummy)
+      # Run flake8 to lint the code
+      - name: Lint Code
         run: |
-          echo "Checking code style..."
-          echo "No linting errors found!"
+          echo "Linting code..."
+          flake8 .
 
-      - name: Build Package (Dummy)
+      # Build package (update this with real build commands)
+      - name: Build Package
         run: |
           echo "Building application package..."
           mkdir build
-          echo "Dummy build completed successfully!"
+          echo "Build completed successfully!"
 
-      - name: Deploy Application (Dummy)
+      # Simulate Deployment (replace with actual deployment logic)
+      - name: Deploy Application
         run: |
           echo "Simulating deployment process..."
           echo "Application deployed successfully (dummy simulation)."
+
