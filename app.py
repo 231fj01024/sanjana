@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request
 from flask_sqlalchemy import SQLAlchemy
+
 app = Flask(__name__)
 
 # ********   Database Configuration ******
@@ -18,14 +19,13 @@ class Student(db.Model):
     student_class = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False)
 
- with app.app_context(): 
-        db.create_all()
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def home():
     students = Student.query.all()
-    return render_template('index.html',std = students) 
-
+    return render_template('index.html', std=students)
 
 # Add Student Page
 @app.route('/add', methods=['GET', 'POST'])
@@ -38,24 +38,37 @@ def add_student():
 
         new_student = Student(
             name=name,
-              roll=roll, 
-              student_class=student_class,
-                email=email)
+            roll=roll,
+            student_class=student_class,
+            email=email
+        )
         db.session.add(new_student)
         db.session.commit()
 
         return redirect(url_for('home'))
-    
-    return render_template('add.html')
 
+    return render_template('add.html')
 
 # 🗑️ DELETE STUDENT
 @app.route('/delete/<int:student_id>', methods=['POST'])
 def delete_student(student_id):
-    global students
-    students = [s for s in students if s['id'] != student_id]
+    student = Student.query.get_or_404(student_id)
+    db.session.delete(student)
+    db.session.commit()
     return redirect(url_for('home'))
 
+# ✏️ UPDATE STUDENT
+@app.route('/update/<int:student_id>', methods=['GET', 'POST'])
+def update_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    if request.method == 'POST':
+        student.name = request.form['name']
+        student.roll = request.form['roll']
+        student.student_class = request.form['class']
+        student.email = request.form['email']
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('update.html', student=student)
 
 @app.route('/about')
 def about():
@@ -65,30 +78,9 @@ def about():
 def contact():
     return render_template('contact.html')
 
-
-
-# ✏️ UPDATE STUDENT
-@app.route('/update/<int:student_id>', methods=['GET', 'POST'])
-def update_student(student_id):
-    for student in students:
-        if student['id'] == student_id:
-            if request.method == 'POST':
-                student['name'] = request.form['name']
-                student['roll'] = request.form['roll']
-                student['class'] = request.form['class']
-                student['email'] = request.form['email']
-                return redirect(url_for('home'))
-            return render_template('update.html', student=student)
-    return "Student not found", 404
-
-
-
 @app.route('/services')
 def services():
     return render_template('services.html')
 
-
-
 if __name__ == '__main__':
-   
     app.run(debug=True)
